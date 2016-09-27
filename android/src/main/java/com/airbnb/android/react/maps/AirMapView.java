@@ -513,7 +513,7 @@ public class AirMapView extends MapView implements GoogleMap.InfoWindowAdapter,
         startMonitoringRegion();
         map.animateCamera(CameraUpdateFactory.newLatLng(coordinate), duration, null);
     }
-    
+
     public void getUserLocation(AirMapView view) {  //Meng Exted
         // Getting LocationManager object from System Service LOCATION_SERVICE
        LocationManager locationManager = (LocationManager) ((ThemedReactContext) getContext()).getSystemService(ThemedReactContext.LOCATION_SERVICE);
