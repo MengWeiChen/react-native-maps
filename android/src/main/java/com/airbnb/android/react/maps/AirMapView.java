@@ -177,7 +177,7 @@ public class AirMapView extends MapView implements GoogleMap.InfoWindowAdapter,
             public boolean onMyLocationButtonClick() {
 
                  // Getting LocationManager object from System Service LOCATION_SERVICE
-                LocationManager locationManager = (LocationManager) ((ThemedReactContext) getContext()).getSystemService(ThemedReactContext.LOCATION_SERVICE);
+                LocationManager locationManager = (LocationManager) getContext().getSystemService(ThemedReactContext.LOCATION_SERVICE);
 
                 // Creating a criteria object to retrieve provider
                 Criteria criteria = new Criteria();
