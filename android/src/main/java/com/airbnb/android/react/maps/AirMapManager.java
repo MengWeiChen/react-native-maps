@@ -33,6 +33,7 @@ public class AirMapManager extends ViewGroupManager<AirMapView> {
     private static final int FIT_TO_ELEMENTS = 3;
     private static final int FIT_TO_SUPPLIED_MARKERS = 4;
     private static final int FIT_TO_COORDINATES = 5;
+    public static final int GET_USER_LOCATION = 6; //Meng Extend
 
     private final Map<String, Integer> MAP_TYPES = MapBuilder.of(
             "standard", GoogleMap.MAP_TYPE_NORMAL,
@@ -222,6 +223,10 @@ public class AirMapManager extends ViewGroupManager<AirMapView> {
             case FIT_TO_COORDINATES:
                 view.fitToCoordinates(args.getArray(0), args.getMap(1), args.getBoolean(2));
                 break;
+                
+            case GET_USER_LOCATION: //Meng Extend
+               view.getUserLocation(view);
+               break;
         }
     }
 

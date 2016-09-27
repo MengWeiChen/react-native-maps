@@ -8,6 +8,7 @@ import {
   NativeModules,
   ColorPropType,
   findNodeHandle,
+  DeviceEventEmitter,
 } from 'react-native';
 import MapMarker from './MapMarker';
 import MapPolyline from './MapPolyline';
@@ -342,6 +343,10 @@ const propTypes = {
    */
   onMarkerDragEnd: PropTypes.func,
 
+  // Meng Extend
+  onMapReady: PropTypes.func,
+  sendRef: PropTypes.func,
+
 };
 
 class MapView extends React.Component {
@@ -368,6 +373,9 @@ class MapView extends React.Component {
     } else if (initialRegion && this.state.isReady) {
       this.map.setNativeProps({ region: initialRegion });
     }
+    this.props.sendRef(this);// Meng Extend
+    this.onUserLocationGetListene =
+    DeviceEventEmitter.addListener('onUserLocationGet', this.props.onUserLocationGet);// Meng Extend
   }
 
   componentWillUpdate(nextProps) {
@@ -392,6 +400,9 @@ class MapView extends React.Component {
       this.map.setNativeProps({ region: initialRegion });
     }
     this.setState({ isReady: true });
+    if (this.props.onMapReady) { // Meng Extend
+      this.props.onMapReady();
+    }
   }
 
   _onLayout(e) {
@@ -430,6 +441,19 @@ class MapView extends React.Component {
 
   fitToElements(animated) {
     this._runCommand('fitToElements', [animated]);
+  }
+
+  getUserLocation() { // Meng Extend
+    this._runCommand('getUserLocation');
+    // return
+  }
+
+  getLastKnownLocation() {  // Meng Extend
+    this.onUserLocationGetListene =
+    DeviceEventEmitter.addListener('onUserLocationGet', () => {
+
+    });// Meng Extend
+    this._runCommand('getLastKnownLocation');
   }
 
   fitToSuppliedMarkers(markers, animated) {
@@ -567,6 +591,34 @@ MapView.Polygon = MapPolygon;
 MapView.Circle = MapCircle;
 MapView.UrlTile = MapUrlTile;
 MapView.Callout = MapCallout;
+
+MapView.RNGLocation = NativeModules.RNGLocation;  // Meng Extend
+
+MapView.getLastLocation = () =>
+  (new Promise((resolve) => {
+    const evEmitter = DeviceEventEmitter.addListener('getLastKnownLocation', (e) => {
+      resolve(e);
+      evEmitter.remove();
+    });
+    NativeModules.RNGLocation.getLastKnownLocation();
+  }));
+
+MapView.getGmsLocationOnce = () =>
+  (new Promise((resolve) => {
+    let gmsLocationCounter = 0;
+    const evEmitter = DeviceEventEmitter.addListener('updateLocation', (e) => {
+      gmsLocationCounter++;
+      if (gmsLocationCounter > 1) {
+        resolve(e);
+        evEmitter.remove();
+        NativeModules.RNGLocation.stop();
+      }
+    });
+    NativeModules.RNGLocation.start();
+    // NativeModules.RNGLocation.getLastKnownLocation();
+  }));
+
+
 Object.assign(MapView, ProviderConstants);
 MapView.ProviderPropType = PropTypes.oneOf(Object.values(ProviderConstants));
 

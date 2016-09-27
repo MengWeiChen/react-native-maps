@@ -41,6 +41,13 @@ import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.TileOverlay;
 
+import com.google.android.gms.maps.GoogleMap.OnMyLocationButtonClickListener;
+import android.location.Criteria;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
+import com.facebook.react.modules.core.DeviceEventManagerModule;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -156,9 +163,39 @@ public class AirMapView extends MapView implements GoogleMap.InfoWindowAdapter,
                 event.putString("action", "marker-press");
                 manager.pushEvent(markerMap.get(marker), "onPress", event);
 
-                return false; // returning false opens the callout window, if possible
+                //return false; // returning false opens the callout window, if possible
+                return true; // returning false opens the callout window, if possible
+                //Meng Extend (set to true)
             }
         });
+
+        map.setOnMyLocationButtonClickListener(new OnMyLocationButtonClickListener() {   //Meng Extend
+            @Override
+            public boolean onMyLocationButtonClick() {
+
+                 // Getting LocationManager object from System Service LOCATION_SERVICE
+                LocationManager locationManager = (LocationManager) ((ThemedReactContext) getContext()).getSystemService(ThemedReactContext.LOCATION_SERVICE);
+
+                // Creating a criteria object to retrieve provider
+                Criteria criteria = new Criteria();
+
+                // Getting the name of the best provider
+                String provider = locationManager.getBestProvider(criteria, true);
+
+                // Getting Current Location
+                Location location = locationManager.getLastKnownLocation(provider);
+                if(location!=null){
+                    LatLngBounds bounds = map.getProjection().getVisibleRegion().latLngBounds;
+                    LatLng center = new LatLng(location.getLatitude(), location.getLongitude());
+                    lastBoundsEmitted = bounds;
+                    eventDispatcher.dispatchEvent(new RegionChangeEvent(getId(), bounds, center, true));
+                }
+
+                return false;
+            }
+        });
+
+
 
         map.setOnInfoWindowClickListener(new GoogleMap.OnInfoWindowClickListener() {
             @Override
@@ -476,6 +513,34 @@ public class AirMapView extends MapView implements GoogleMap.InfoWindowAdapter,
         startMonitoringRegion();
         map.animateCamera(CameraUpdateFactory.newLatLng(coordinate), duration, null);
     }
+    
+    public void getUserLocation(AirMapView view) {  //Meng Exted
+        // Getting LocationManager object from System Service LOCATION_SERVICE
+       LocationManager locationManager = (LocationManager) ((ThemedReactContext) getContext()).getSystemService(ThemedReactContext.LOCATION_SERVICE);
+
+       // Creating a criteria object to retrieve provider
+       Criteria criteria = new Criteria();
+
+       // Getting the name of the best provider
+       String provider = locationManager.getBestProvider(criteria, true);
+
+       // Getting Current Location
+       Location location = locationManager.getLastKnownLocation(provider);
+
+
+       WritableMap event = new WritableNativeMap();
+       WritableMap coordinate = new WritableNativeMap();
+       coordinate.putDouble("latitude", location!=null?location.getLatitude():0);
+       coordinate.putDouble("longitude", location!=null?location.getLongitude():0);
+       event.putMap("coordinate", coordinate);
+       ReactContext reactContext = (ReactContext) view.getContext();
+       reactContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+               .emit("onUserLocationGet", event);
+       //manager.pushEvent(view, "onUserLocationGet", event);
+       Log.d("AirMapView", "onUserLocationGet");
+       //startMonitoringRegion();
+       //map.animateCamera(CameraUpdateFactory.newLatLng(center), duration, null);
+   }
 
     public void fitToElements(boolean animated) {
         LatLngBounds.Builder builder = new LatLngBounds.Builder();
